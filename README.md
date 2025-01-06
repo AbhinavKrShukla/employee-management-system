@@ -146,13 +146,77 @@ Code it as:
 other pages. This file can be deleted now as we were just seeing
 the way to create a page, **which extends `admin/layouts/master`**.
 
+### Update link of Sidebar
+
+Go to `sidebar.blade.php` and update the 
+link of Dashboard Button from `index.html` to `{{url('/')}}`.
+
+## Migration
+
+Create these models and migrations:
+
+- Role
+    ```php
+    $table->id();
+    $table->string('name');
+    $table->text('description');
+    $table->timestamps();
+    ```
+- Permission
+    ```php
+    $table->id();
+    $table->unsignedBigInteger('role_id');
+    $table->text('name');
+    $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');
+    $table->timestamps();
+    ```
+- Department
+    ```php
+    $table->id();
+    $table->string('name');
+    $table->text('description')->nullable();
+    $table->timestamps();
+    ```
+- Leave
+    ```php
+    $table->id();
+    $table->unsignedBigInteger('user_id');
+    $table->date('from');
+    $table->date('to');
+    $table->string('type');
+    $table->string('description');
+    $table->integer('status')->default(0);
+    $table->text('message');
+    $table->timestamps();
+    ```
+- Notice
+    ```php
+    $table->id();
+    $table->string('title');
+    $table->text('description');
+    $table->date('date');
+    $table->string('name');
+    $table->timestamps();
+    ```
+- User (already present)
+    ```php
+    // user migration
+    $table->id();
+    $table->string('name');
+    $table->string('email')->unique();
+    $table->timestamp('email_verified_at')->nullable();
+    $table->string('password');
+    $table->string('address')->nullable();
+    $table->string('mobile_number')->nullable();
+    $table->integer('department_id');
+    $table->integer('role_id');
+    $table->string('designation');
+    $table->date('start_from');
+    $table->string('image');
+    ```
 
 
-
-
-
-
-
+## Departments
 
 
 
