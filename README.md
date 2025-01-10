@@ -104,7 +104,7 @@ This is a view route, which doesn't require a controller.
 It directly shows a view file.
 
 
-### create.blade.php
+### create.blade.php - A test file
 
 Create a `create.blade.php` file in `views/admin/`.
 This is the file the previous route is redirecting to.
@@ -151,7 +151,7 @@ the way to create a page, **which extends `admin/layouts/master`**.
 Go to `sidebar.blade.php` and update the 
 link of Dashboard Button from `index.html` to `{{url('/')}}`.
 
-## Migration
+# Migrations
 
 Create these models and migrations:
 
@@ -216,9 +216,458 @@ Create these models and migrations:
     ```
 
 
-## Departments
+# Departments
+
+## Configuration for departments
+
+### Create Department Controller
+
+`php artisan make:controller DepartmentController -r`
+
+### Unguard all the columns from Department Model
+
+```php
+class Department extends Model
+{
+    protected $guarded = [];
+}
+```
+
+### Create a resource route for departments
+
+```php
+Route::resource('departments', App\Http\Controllers\DepartmentController::class);
+```
 
 
+## Create Department Form
+
+### @create method in DepartmentController
+This method just returns the view page of the form.
+
+```php
+    public function create()
+    {
+        return view('admin.department.create');
+    }
+```
+
+### Create view page
+
+- Create `views/admin/department/create.blade.php`.
+- Copy everything from `home.blade.php`.
+- Change the `@extends` to `@extends('admin.layouts.master')`
+- Create a form in `card-body div` and submitting the form 
+hits the store method of departments.
+- Also, add elements that highlight the input box when
+validation errors occur and also a `<span>` to show them.
+  (Copy it from `login.blade.php`).
+- Also, create a div above the card and form, to show the
+Session message of success when the form is successfully submitted.
+
+```bladehtml
+<!--views/admin/department/create.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card">
+                <div class="card-header">{{ __('Create Department') }}</div>
+
+                <div class="card-body">
+
+                    <form method="post" action="{{route('departments.store')}}"> @csrf
+
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input class="form-control @error('name') is-invalid @enderror" type="text" name="name" value="{{old('name')}}">
+                            @error('name')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" type="text" name="description">{{old('description')}}</textarea>
+                            @error('description')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group text-center mt-2">
+                            <button class="btn btn-primary" type="submit">Submit</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+
+```
+
+
+## Create Departments
+
+### Reconfigure the Side bar
+
+- Go to the `views/admin/layouts/sidebar.blade.php`.
+- Change `Layout` to `Departments`.
+- It will contain sub-links as:
+  - Create
+  - View
+
+### @store method of Department Controller
+
+Steps-
+- Validation
+- Store in the database
+
+```php
+// DepartmentController@store
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'name'=>'required|unique:departments',
+        ]);
+        $department = new Department();
+        $department->name = $request->name;
+        $department->description = $request->description;
+        $department->save();
+        return redirect()->back()->with('message','Department added successfully');
+    }
+```
+
+## List all the departments
+
+### DepartmentController@index method
+
+```php
+
+```
+
+### @index.blade.php
+
+- Create the file: `resources/views/admin/department/index.blade.php`
+- Copy everything from `create.blade.php`. Remove all the contents
+inside `<div class="col-md-8">`
+- Go to `public/template/tables.html` and copy the `<table>` div 
+along with its parent `<card>` tag.
+- Change the heading to `All Departments`.
+- Keep the Heading and only one row as we are going to iterate
+the data from our database.
+- Keep the columns:
+  - SN
+  - Name
+  - Description
+  - Edit
+  - Delete
+
+```bladehtml
+<!--resources/views/admin/department/index.blade.php-->
+
+@extends('admin.layouts.master')
+
+@section('content')
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+
+                @if(Session::has('message'))
+                    <div class="alert alert-success">
+                        {{Session::get('message')}}
+                    </div>
+                @endif
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-table me-1"></i>
+                        All Departments
+                    </div>
+                    <div class="card-body">
+
+                        @if(count($departments)>0)
+
+                            <table id="datatablesSimple">
+                                <thead>
+                                    <tr>
+                                        <th>SN</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Edit</th>
+                                        <th>Delete</th>
+
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                @foreach($departments as $key=>$department)
+                                <tr>
+                                    <td>{{$key+1}}</td>
+                                    <td>{{$department->name}}</td>
+                                    <td>{{$department->description}}</td>
+                                    <td>
+                                        <a href="{{route('departments.edit', $department->id)}}">
+                                            <div class="p-1">
+                                            <i class="fas fa-edit"></i>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-trash"></i>
+                                    </td>
+
+                                </tr>
+                                @endforeach
+
+                                </tbody>
+
+                            </table>
+
+                        @else
+                            No departments found!
+                        @endif
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+@endsection
+
+```
+
+## Update department
+
+### Create button in index page
+
+- In the index page, link the edit button to `department.edit` route.
+
+### DepartmentController@edit method
+
+- Find the department from db using `$id`.
+- Return the `views/admin/department/edit.blade.php` file, along
+with the found department.
+
+```php
+// DepartmentController@edit
+    public function edit(string $id)
+    {
+        $department = Department::find($id);
+        return view('admin.department.edit', compact('department')) ;
+    }
+```
+
+### Create the view file for edit
+
+- Create `views/admin/department/edit.blade.php`.
+- Copy everything from create.blade.php.
+- Change the Heading to 'Update Department'.
+- Change the `action` attribute of the form to: `{{route('admin.department.update', $department->id)}}`.
+- In the `<form>` tag, keep the method to `post`. Just after the 
+form tag, user blade template for put method: `@method('PUT')`.
+- Change all the values of the input file. The values should be
+got from the `$department` variable returned by controller.
+- Change the submit button name to `Update`.
+
+```bladehtml
+<!--views/admin/department/edit.blade.php-->
+
+@extends('admin.layouts.master')
+
+@section('content')
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+
+                @if(Session::has('message'))
+                    <div class="alert alert-success">
+                        {{Session::get('message')}}
+                    </div>
+                @endif
+
+                <div class="card">
+                    <div class="card-header">{{ __('Update Department') }}</div>
+
+                    <div class="card-body">
+
+                        <form method="post" action="{{route('departments.update', $department->id)}}">
+                        @csrf
+                        @method('PATCH')
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input class="form-control @error('name') is-invalid @enderror" type="text" name="name" value="{{$department->name}}">
+                                @error('name')
+                                <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea class="form-control @error('description') is-invalid @enderror" type="text" name="description">{{$department->description}}</textarea>
+                                @error('description')
+                                <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group text-center mt-2">
+                                <button class="btn btn-primary" type="submit">Update</button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+```
+
+
+### DepartmentController@update
+
+- Validate-
+  - `'name'=>'required|unique:departments,name,'.$id,` ***IMPORTANT
+  - It should be unique except the same column.
+- Get the instance of `Department` model.
+- Update the db.
+- Save it.
+- Return redirect back to with a success message.
+
+```php
+// DepartmentController@update
+    public function update(Request $request, string $id)
+    {
+        $this->validate($request,[
+            'name'=>'required|unique:departments,name,'.$id,
+        ]);
+
+        $department = Department::find($id);
+        $department->name = $request->input('name');
+        $department->description = $request->input('description');
+        $department->save();
+        return redirect(route('departments.index'))->with('message','Department updated successfully');
+    }
+
+//        Another way of doing it   //////////////////////////
+//        $department = Department::find($id);
+//        $data = $request->all();
+//        $department->update($data);
+//        return redirect(route('departments.index'))->with('message','Department updated successfully');
+```
+
+
+## Delete a Department
+
+### Link the Delete Button in Index page
+
+- In the index page, wrap the delete button with a `<a>` tag
+which hits `DepartmentController@destroy`.
+
+- Use a Bootstrap 5 Modal so show a Pop-up when the delete
+button is pressed.
+
+  - Go to Bootstrap 5 official website and find a modal.
+  - There are two sections in it. First, a button with some attributes.
+  Second, a code snippet for Modal.
+  - Copy the two attributes from `<button>` 
+  tag: `data-bs-toggle="modal" data-bs-target="#exampleModal"` and 
+  paste them in the `<a>` tag in our index page.
+  - Copy the whole Modal Snippet and paste them just after
+  the `<a>` tag in our index page.
+  - Modify the Modal:
+    - change the button names to: `Close` and `Delete`,
+    - change the button class to `btn-danger`,
+    - change the main text to: `Do you really want to delete?`,
+    - change the `data-bs-target="#exampleModal` to 
+    `data-bs-target="#exampleModal{{$department->id}}`; do the same
+    in Modal `<div id="">` as well: `<div class="modal fade" id="exampleModal{{$department->id}}" ...`.
+  - Now, whenever the delete icon is be pressed,
+  it shows a pop-up.
+
+- Embed a form in the model which hits the destroy method of 
+DepartmentController.
+
+Code snippet of delete button
+
+```bladehtml
+<!--Code snippet of delete button-->
+<td>
+    <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal{{$department->id}}">
+        <div class="p-1">
+            <i class="fas fa-trash"></i>
+        </div>
+    </a>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal{{$department->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="{{route('departments.destroy', $department->id)}}" method="post">
+                @csrf
+                @method('DELETE')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Do you really want to delete?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal End -->
+</td>
+```
+
+
+### DepartmentController@destroy
+
+- Find the particular record using `Department` model and then
+delete it.
+- Return to Index page along with a success message.
+
+```php
+// DepartmentController@destroy
+    public function destroy(string $id)
+    {
+        $department = Department::find($id);
+        $department->delete();
+        return redirect(route('departments.index'))->with('message','Department deleted successfully');
+    }
+```
+
+
+[//]: # (Department Ends Here ---------)
+<hr>
 
 
 
