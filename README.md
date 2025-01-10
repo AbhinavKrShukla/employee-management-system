@@ -669,6 +669,157 @@ delete it.
 [//]: # (Department Ends Here ---------)
 <hr>
 
+# Roles
+
+## Configurations
+
+### Unguard all the columns in the Model
+
+```php
+// Role Model
+class Role extends Model
+{
+    protected $guarded = [];
+}
+```
+
+### Create RoleController
+
+`php artisan make:controller RoleController -r`
+
+### Create resource route for roles
+
+```php
+Route::resource('roles', RoleController::class);
+```
+
+### Configure the Sidebar for the roles
+
+This should be the structure of the sidebar.
+- Sidebar
+  - Departments
+  - Users
+    - Roles
+      - Create Role
+      - View Role
 
 
+## Create Roles
+
+### RoleController@create
+
+Return the `admin/role/create.blade.php`.
+
+```php
+// admin/role/create.blade.php
+    public function create()
+    {
+        return view('admin.role.create');
+    }
+```
+
+### role\create.blade.php
+
+- Create the file `resources/views/admin/role/create.blade.php`.
+- Copy everything from `admin/department/create.blade.php`.
+- Change the required things. That's all.
+
+### RoleController@store
+
+```php
+// RoleController@store
+    public function store(Request $request)
+    {
+//        return 'store hit';
+        $this->validate($request, [
+            'name' => 'required|unique:roles',
+        ]);
+
+        Role::create($request->all());
+        return redirect()->back()->with('message', 'Role created successfully.');
+    }
+```
+
+
+## Get all the roles
+
+### RoleController@index
+
+- Get all the roles.
+- Return the index view page.
+
+```php
+    public function index()
+    {
+        $roles = Role::all();
+        return view('admin.role.index', compact('roles'));
+    }
+```
+
+### role\index.blade.php
+
+- Create the file `resources/views/admin/role/index.blade.php`.
+- Copy everything from `admin/department/index.blade.php`.
+- Change the required things. That's all.
+
+
+## Update a role
+
+### RoleController@edit
+
+```php
+// RoleController@edit
+    public function edit(string $id)
+    {
+        $role = Role::find($id);
+        return view('admin.role.edit', compact('role'));
+    }
+```
+
+### role\edit.blade.php
+
+- Create this file.
+- Copy everything from `department/edit.blade.php`.
+- Change the required things from `departments` to `roles`.
+
+### RoleController@update
+
+- Validate.
+- Find the required resource from db using Model.
+- Update all at once: `$role->update($request->all());`.
+- Return redirect back with a success message.
+
+```php
+// RoleController@update
+    public function update(Request $request, string $id)
+    {
+        $this->validate($request, [
+            'name' => 'required|unique:roles,name,'.$id,
+            'description' => 'required',
+        ]);
+
+        $role = Role::find($id);
+        $role->update($request->all());
+        return redirect(route('roles.index'))->with('message', 'Role updated successfully.');
+    }
+```
+
+### Delete a Role
+
+- Since, index page is already set up with the delete button,
+its route and the pop-up.
+- So just create the Controller method for it.
+
+```php
+// RoleController@destroy
+
+    public function destroy(string $id)
+    {
+        $role = Role::find($id);
+        $role->delete();
+        return redirect()->back()->with('message', 'Role deleted successfully.');
+    }
+```
+
+[//]: # (Roles completed.)
 
