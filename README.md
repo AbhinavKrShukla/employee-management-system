@@ -703,7 +703,7 @@ This should be the structure of the sidebar.
       - Create Role
       - View Role
 
-
+ 
 ## Create Roles
 
 ### RoleController@create
