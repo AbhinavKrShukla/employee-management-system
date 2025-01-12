@@ -215,6 +215,12 @@ Create these models and migrations:
     $table->string('image');
     ```
 
+# Models
+
+## Relationships
+
+- `User` has one `Department`.
+- `User` has on `Role`.
 
 # Departments
 
@@ -808,7 +814,7 @@ Return the `admin/role/create.blade.php`.
 
 - Since, index page is already set up with the delete button,
 its route and the pop-up.
-- So just create the Controller method for it.
+- So create the Controller method for it.
 
 ```php
 // RoleController@destroy
@@ -822,4 +828,741 @@ its route and the pop-up.
 ```
 
 [//]: # (Roles completed.)
+<hr>
 
+# Employee
+
+## Let's Create Users first
+
+### Create UserController
+
+`php artisan make:controller UserController -r`
+
+### Define $fillables in User model
+
+```php
+// User model
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'address',
+        'mobile_number',
+        'department_id',
+        'role_id',
+        'designation',
+        'start_from',
+        'image',
+    ];
+```
+
+## Crete resource route for Users
+
+```php
+Route::resource('users', UserController::class);
+```
+
+
+## Employee Form and Validation
+
+### UserController@create
+
+It returns the view page for form
+
+```php
+// UserController@create
+    public function create()
+    {
+        return view('admin.user.create');
+    }
+```
+
+### user/create.blade.php
+
+- Copy everything from `department/create.blade.php`.
+- Change the heading and others.
+- Add more required input fields.
+- In the department and role, use `<select>` and directly iterate
+using respective models and show them.
+
+```bladehtml
+<!--user/create.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5 mb-2">
+    <form method="post" action="{{route('users.store')}}" enctype="multipart/form-data"> @csrf
+        <div class="row justify-content-center">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success" style="width: 90%">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="mb-3" style="width: 80%; font-size: 25px; font-weight: bold">
+                Create User
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="card">
+                    <div class="card-header fw-bold">{{ __('General Information') }}</div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input class="form-control @error('first-name') is-invalid @enderror" type="text"
+                                   name="first-name"
+                                   value="{{old('first-name')}}">
+                            @error('first-name')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input class="form-control @error('last-name') is-invalid @enderror" type="text"
+                                   name="last-name"
+                                   value="{{old('last-name')}}">
+                            @error('last-name')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input class="form-control @error('address') is-invalid @enderror" type="text"
+                                   name="address"
+                                   value="{{old('address')}}">
+                            @error('address')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mobile Number</label>
+                            <input class="form-control @error('mobile_number') is-invalid @enderror" type="text"
+                                   name="mobile_number"
+                                   value="{{old('mobile_number')}}">
+                            @error('mobile_number')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Department</label>
+                            <div class="w-25">
+                                <select class="form-control" name="department_id">
+                                    <option value="">Select</option>
+                                    @foreach(\App\Models\Department::all() as $department)
+                                    <option value="{{$department->id}}"
+                                            {{$department->id == old('department_id') ? "selected" : ""}}>
+                                        {{$department->name}}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('department_id')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Designation</label>
+                            <input class="form-control @error('designation') is-invalid @enderror" type="text"
+                                   name="designation"
+                                   value="{{old('designation')}}">
+                            @error('designation')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input class="form-control @error('start_from') is-invalid @enderror" type="date"
+                                   name="start_from"
+                                   value="{{old('start_from')}}">
+                            @error('start_from')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Image</label>
+                            <input class="form-control @error('image') is-invalid @enderror" type="file"
+                                   name="image"
+                                   value="{{old('image')}}" accept="image/*">
+                            @error('image')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            {{--            ----------------------------------------------        --}}
+
+            <div class="col-md-4">
+
+                <div class="card">
+                    <div class="card-header fw-bold">{{ __('Login Information') }}</div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input class="form-control @error('email') is-invalid @enderror" type="text"
+                                   name="email"
+                                   value="{{old('email')}}">
+                            @error('email')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input class="form-control @error('password') is-invalid @enderror" type="password"
+                                   name="password" value="{{old('password')}}">
+                            @error('password')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Role</label>
+                            <div class="w-25">
+                                <select class="form-control" name="role_id">
+                                    <option value="#">Select</option>
+                                    @foreach(\App\Models\Role::all() as $role)
+                                    <option value="{{$role->id}}"
+                                            @if($role->id == old('role_id')) selected @endif>
+                                        {{$role->name}}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('role_id')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div class="form-group text-center mt-2">
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </div>
+            </div>
+
+
+        </div>
+    </form>
+</div>
+@endsection
+
+```
+
+### UserController@store
+
+- Validate all the fields. Image should not be required as there is a default option.
+- Check if there is an image.
+- HashName the image name and encrypt the password.
+- Save it to db.
+- Redirect back with a success message.
+
+```php
+// UserController@store
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'first-name' => 'required|string|max:255',
+            'last-name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+            'address' => 'required|string|max:255',
+            'mobile_number' => 'required|string|max:12|min:5|unique:users',
+            'department_id' => 'required|string|max:255',
+            'role_id' => 'required|string|max:255',
+            'designation' => 'required|string|max:255',
+            'start_from' => 'required|date',
+            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $data = $request->all();
+        if($request->hasFile('image')){
+            $image = $request->image->hashName();
+            $request->image->move(public_path('profile'), $image);
+        } else {
+            $image = 'default.png';
+        }
+        $data['name'] = $request['first-name'].' '.$request['last-name'];
+        $data['image'] = $image;
+        $data['password'] = bcrypt($request['password']);
+
+        $user = User::create($data);
+
+        return redirect()->back()->with('message', 'User Added Successfully ');
+    }
+```
+
+
+## Get all the Employees
+
+### UserController@index
+
+- This method gets all the users from db and returns the
+view page `user/index.blade.php`.
+```php
+// UserController@index
+    public function index()
+    {
+        $users = User::all();
+        return view('admin.user.index', compact('users'));
+    }
+```
+
+### user/index.blade.php
+
+```bladehtml
+<!--user/index.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    All Employees
+                </div>
+                <div class="card-body">
+
+                    @if(count($users)>0)
+
+                    <table id="datatablesSimple">
+                        <thead>
+                        <tr>
+                            <th>SN</th>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Start Date</th>
+                            <th>Address</th>
+                            <th>Mobile</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach($users as $key=>$user)
+                        <tr>
+                            <td>{{$key+1}}</td>
+                            <td>
+                                <img src="{{url(asset('profile/'.$user->image))}}" alt="Profile"
+                                     height="100">
+                            </td>
+                            <td>{{$user->name}}</td>
+                            <td>{{$user->email}}</td>
+                            <td>{{$user->role->name}}</td>
+                            <td><span class="badge bg-success">{{$user->department->name}}</span></td>
+                            <td>{{$user->designation}}</td>
+                            <td>{{$user['start_from']}}</td>
+                            <td class="overflow-clip">{{$user->address}}</td>
+                            <td>{{$user->mobile_number}}</td>
+
+                            <td>
+                                <a href="{{route('users.edit', $user->id)}}">
+                                    <div class="p-1">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" data-bs-toggle="modal"
+                                   data-bs-target="#exampleModal{{$user->id}}">
+                                    <div class="p-1">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                </a>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="exampleModal{{$user->id}}" tabindex="-1"
+                                     aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <form action="{{route('users.destroy', $user->id)}}" method="post">
+                                            @csrf
+                                            @method('DELETE')
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="exampleModalLabel">Confirm
+                                                        Delete</h5>
+                                                    <button type="button" class="btn-close"
+                                                            data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Do you really want to delete?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">Close
+                                                    </button>
+                                                    <button type="submit" class="btn btn-danger">Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <!-- Modal End -->
+                            </td>
+                        </tr>
+                        @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                    @else
+                    No employee found!
+                    @endif
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endsection
+
+```
+
+## Edit the form
+
+### UserController@edit
+
+- Find the user using `User` Model.
+- Return the view page.
+
+```php
+// UserController@edit
+    public function edit(string $id)
+    {
+        $user = User::find($id);
+        return view('admin.user.edit', compact('user'));
+    }
+```
+
+### user/edit.blade.php
+
+```bladehtml
+<!--user/edit.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5 mb-2">
+    <form method="post" action="{{route('users.update', $user->id)}}" enctype="multipart/form-data">
+        @csrf @method('PUT')
+        <div class="row justify-content-center">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success" style="width: 90%">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="mb-3" style="width: 80%; font-size: 25px; font-weight: bold">
+                Update User
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="card">
+                    <div class="card-header fw-bold">{{ __('General Information') }}</div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input class="form-control @error('name') is-invalid @enderror" type="text"
+                                   name="name"
+                                   value="{{$user->name}}">
+                            @error('name')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input class="form-control @error('address') is-invalid @enderror" type="text"
+                                   name="address"
+                                   value="{{$user->address}}">
+                            @error('address')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mobile Number</label>
+                            <input class="form-control @error('mobile_number') is-invalid @enderror" type="text"
+                                   name="mobile_number"
+                                   value="{{$user->mobile_number}}">
+                            @error('mobile_number')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Department</label>
+                            <div class="w-25">
+                                <select class="form-control" name="department_id">
+                                    <option value="">Select</option>
+                                    @foreach(\App\Models\Department::all() as $department)
+                                    <option value="{{$department->id}}"
+                                            @if($department->id == $user->department_id) selected @endif>
+                                        {{$department->name}}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('department_id')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Designation</label>
+                            <input class="form-control @error('designation') is-invalid @enderror" type="text"
+                                   name="designation"
+                                   value="{{$user->designation}}">
+                            @error('designation')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input class="form-control @error('start_from') is-invalid @enderror" type="date"
+                                   name="start_from"
+                                   value="{{$user->start_from}}">
+                            @error('start_from')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Image</label>
+                            <input class="form-control @error('image') is-invalid @enderror" type="file"
+                                   name="image"
+                                   accept="image/*">
+                            @error('image')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            {{--            ----------------------------------------------        --}}
+
+            <div class="col-md-4">
+
+                <div class="card">
+                    <div class="card-header fw-bold">{{ __('Login Information') }}</div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input class="form-control @error('email') is-invalid @enderror" type="text"
+                                   name="email"
+                                   value="{{$user->email}}">
+                            @error('email')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input class="form-control @error('password') is-invalid @enderror" type="password"
+                                   name="password">
+                            @error('password')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Role</label>
+                            <div class="w-25">
+                                <select class="form-control" name="role_id">
+                                    <option value="#">Select</option>
+                                    @foreach(\App\Models\Role::all() as $role)
+                                    <option value="{{$role->id}}"
+                                            @if($role->id == $user->role_id) selected @endif>
+                                        {{$role->name}}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('role_id')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div class="form-group text-center mt-2">
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </div>
+            </div>
+
+
+        </div>
+    </form>
+</div>
+@endsection
+
+```
+
+### UserController@update
+
+```php
+// UserController@update
+    public function update(Request $request, string $id)
+    {
+        $user = User::find($id);
+
+        $this->validate($request,[
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$id,
+            'address' => 'required|string|max:255',
+            'mobile_number' => 'required|max:12|min:5|unique:users,mobile_number,'.$id,
+            'department_id' => 'required|string|max:255',
+            'role_id' => 'required|string|max:255',
+            'designation' => 'required|string|max:255',
+            'start_from' => 'required|date',
+        ]);
+
+        if($request->password){
+            $this->validate($request,[
+                'password' => 'string|min:6',
+            ]);
+            $password = bcrypt($request['password']);
+        } else {
+            $password = $user->password;
+        }
+
+        if ($request->hasFile('image')) {
+            $this->validate($request,[
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+
+            // Unlink the previous image, only if it's not default image
+            if($user->image != 'default.png'){
+                unlink(public_path('profile').$user->image);
+                return $user->image;
+            }
+
+            // Store the new image
+            $image = $request->image->hashName();
+            $request->image->move(public_path('profile'), $image);
+        } else {
+            $image = $user->image;
+        }
+
+        $data = $request->all();
+        $data['name'] = $request['name'];
+        $data['image'] = $image;
+        $data['password'] = $password;
+
+        $user->update($data);
+
+        return redirect()->back()->with('message', 'User Updated Successfully ');
+
+    }
+```
+
+### UserController@destroy
+
+```php
+// UserController@destroy
+    public function destroy(string $id)
+    {
+        $user = User::find($id);
+
+        // Check if user has default image, don't delete it from public path
+
+        if($user->image != 'default.png'){
+            unlink(public_path('profile/').$user->image);
+        }
+        $user->delete();
+        return redirect()->back()->with('message', 'User Deleted Successfully ');
+    }
+```
+
+[//]: # (Employee Completed)
+<hr>
+
+# Permissions 
