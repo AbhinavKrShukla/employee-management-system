@@ -10,23 +10,71 @@
                         Dashboard
                     </a>
                     <div class="sb-sidenav-menu-heading">Interface</div>
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
-                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                        Departments
-                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                    </a>
-                    <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav">
-                            <a class="nav-link" href="{{route('departments.create')}}">Create</a>
-                            <a class="nav-link" href="{{route('departments.index')}}">View</a>
-                        </nav>
-                    </div>
+                    @if(isset(auth()->user()->role->permission['name']['department']['can-view']))
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                            <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                            Departments
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                        </a>
+                        <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                @if(isset(auth()->user()->role->permission['name']['department']['can-add']))
+                                    <a class="nav-link" href="{{route('departments.create')}}">Create</a>
+                                @endif
+                                <a class="nav-link" href="{{route('departments.index')}}">View</a>
+                            </nav>
+                        </div>
+                    @endif
+
                     <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
                         <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
                         User
                         <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                     </a>
                     <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+                        <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
+
+                            @if(isset(auth()->user()->role->permission['name']['role']['can-view']))
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
+                                Roles
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    @if(isset(auth()->user()->role->permission['name']['role']['can-add']))
+                                        <a class="nav-link" href="{{route('roles.create')}}">Create Roles</a>
+                                    @endif
+                                    @if(isset(auth()->user()->role->permission['name']['role']['can-view']))
+                                        <a class="nav-link" href="{{route('roles.index')}}">View Roles</a>
+                                    @endif
+                                </nav>
+                            </div>
+                            @endif
+
+                            @if(isset(auth()->user()->role->permission['name']['permission']['can-view']))
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">
+                                Permissions
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{route('permissions.index')}}">View Permission</a>
+                                    @if(isset(auth()->user()->role->permission['name']['permission']['can-add']))
+                                        <a class="nav-link" href="{{route('permissions.create')}}">Create Permission</a>
+                                    @endif
+                                </nav>
+                            </div>
+                            @endif
+                        </nav>
+                    </div>
+
+                    {{-- Permissions --}}
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagesPermission" aria-expanded="false" aria-controls="collapsePagesPermission">
+                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                        Permissions
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapsePagesPermission" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                         <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
                                 Roles
@@ -51,6 +99,8 @@
                             </div>
                         </nav>
                     </div>
+
+
                     <div class="sb-sidenav-menu-heading">Addons</div>
                     <a class="nav-link" href="charts.html">
                         <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>

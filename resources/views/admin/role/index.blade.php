@@ -40,13 +40,16 @@
                                         <td>{{$role->name}}</td>
                                         <td>{{$role->description}}</td>
                                         <td>
+                                            @if(isset(auth()->user()->role->permission['name']['role']['can-edit']))
                                             <a href="{{route('roles.edit', $role->id)}}">
                                                 <div class="p-1">
                                                     <i class="fas fa-edit"></i>
                                                 </div>
                                             </a>
+                                            @endif
                                         </td>
                                         <td>
+                                            @if(isset(auth()->user()->role->permission['name']['role']['can-delete']))
                                             <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal{{$role->id}}">
                                                 <div class="p-1">
                                                     <i class="fas fa-trash"></i>
@@ -75,8 +78,8 @@
                                                     </form>
                                                 </div>
                                             </div>
-
                                             <!-- Modal End -->
+                                            @endif
 
                                         </td>
 

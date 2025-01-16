@@ -221,6 +221,8 @@ Create these models and migrations:
 
 - `User` has one `Department`.
 - `User` has on `Role`.
+- `Permission` belongs to `Role`.
+- `Role` has one `Permission`.
 
 # Departments
 
@@ -1566,3 +1568,621 @@ view page `user/index.blade.php`.
 <hr>
 
 # Permissions 
+
+## Create Employee Login
+
+- Make sure that the default login provided by vue 
+is working properly. That's all.
+
+### Route Modification
+
+- Enclose the admin routes within the auth middleware.
+- Even the `'/'` home page is under middleware.
+- Then login.
+
+```php
+Route::middleware(['auth'])->group(function () {
+    Route::get('/', function () {
+        return view('welcome');
+    });
+    Route::resource('departments', DepartmentController::class);
+    Route::resource('roles', RoleController::class);
+    Route::resource('users', UserController::class);
+});
+```
+
+### Modify the `RouteServiceProvider.php`
+
+- Check if there is `Providers/RouteServiceProvider.php` file.
+- If it is, then modify it such that `'/'` is the home page. Else
+ignore.
+
+  
+### Setup the logout button in Navbar
+
+- The default logout button provided by `bootstrap template` is not functional.
+- To make it functional, copy the `<a>` and `<form>` tag of `logout` from 
+`resources/views/layouts/app.blade.php` to the navbar: 
+`resources/views/admin/layouts/navbar.blade.php`. 
+- That's all.
+
+```bladehtml
+<!--What to copy and paste-->
+<a class="dropdown-item" href="{{ route('logout') }}"
+   onclick="event.preventDefault();
+                                                     document.getElementById('logout-form').submit();">
+    {{ __('Logout') }}
+</a>
+
+<form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+    @csrf
+</form>
+```
+
+**Note:** If it throws error that: `Vite manifest not found at: C:\xampp\htdocs\employee-management-system\public\build/manifest.json`,
+then run this npm command: `npm run build`. It should solve the issue.
+
+
+## Setup for Permissions
+
+### Create Permission Controller
+
+`php artisan make:controller PermissionController -r`
+
+### Unguard the columns in the Permission model
+
+```php
+class Permission extends Model
+{
+    protected $guarded = [];
+}
+```
+
+### Create Resource route for Permissions
+
+- It should be under middleware auth.
+
+```php
+Route::resource('permissions', PermissionController::class);
+```
+
+## Permission Form
+
+### PermissionController@create
+
+```php
+    public function create()
+    {
+        // $permissionList is an array in PermissionController class.
+        // $permissionList = ['department','role','permission','user',]
+        $permissionList = $this->permissionList;
+        return view('admin.permission.create', compact('permissionList'));
+    }
+```
+
+### permission/create.blade.php
+
+- It extends the `master.blade.php` and have card layout from `home.blade.php`.
+- Create a form which hits the `permissions.store` route.
+- Create a `<select>` to select the role.
+- It has these permission options: `can-add; can-edit; can-view; can-delete; can-list`.
+- Create a `<table>` with these permission options as `checkbox` input for each role.
+- Each `checkbox` input should have a name which is specific to each department and permission.
+For example: `<input name="[department][can-edit]" type="checkbox" value="1">`. It has a default value of 1.
+- Instead of writing for each department, we iterate over the roles and display it as:
+
+    ```bladehtml
+    <tbody>
+        @foreach(\App\Models\Role::all() as $role)
+    
+        <tr>
+            <td>{{$role->name}}</td>
+            <td><input type="checkbox" name="name[{{strtolower($role->name)}}][can-add]" value="1"></td>
+            <td><input type="checkbox" name="name[{{strtolower($role->name)}}][can-edit]" value="1"></td>
+            <td><input type="checkbox" name="name[{{strtolower($role->name)}}][can-view]" value="1"></td>
+            <td><input type="checkbox" name="name[{{strtolower($role->name)}}][can-delete]" value="1"></td>
+            <td><input type="checkbox" name="name[{{strtolower($role->name)}}][can-list]" value="1"></td>
+    
+        </tr>
+    
+        @endforeach
+    </tbody>
+    ```
+
+- Create a submit button.
+
+```bladehtml
+<!--permission/create.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+
+<div class="container mt-3">
+    <div class="row justify-content-center">
+
+        @if(Session::has('message'))
+        <div class="alert alert-success" style="width: 90%">
+            {{Session::get('message')}}
+        </div>
+        @endif
+
+        <div class="col-md-8">
+            <form method="post" action="{{route('permissions.store')}}"> @csrf
+                <div class="card">
+                    <div class="card-header">{{ __('Permissions') }}</div>
+
+                    <div class="card-body">
+
+                        {{--    Roles Dropdown  --}}
+
+                        <select class="form-select @error('role_id') is-invalid @enderror" name="role_id">
+                            @foreach(\App\Models\Role::all() as $role)
+                            <option value="{{$role->id}}">{{$role->name}}</option>
+                            @endforeach
+                        </select>
+                        @error('role_id')
+                        <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                        @enderror
+
+                        {{--    Table for the permission    --}}
+
+                        <table class="table table-dark table-striped mt-4">
+
+                            <thead>
+                            <tr>
+                                <th scope="col">Permission</th>
+                                <th scope="col">can-add</th>
+                                <th scope="col">can-edit</th>
+                                <th scope="col">can-view</th>
+                                <th scope="col">can-delete</th>
+                                <th scope="col">can-list</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            @foreach($permissionList as $permissionItem)
+
+                            <tr>
+                                <td>{{$permissionItem}}</td>
+                                <td><input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-add]" value="1"></td>
+                                <td><input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-edit]" value="1"></td>
+                                <td><input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-view]" value="1"></td>
+                                <td><input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-delete]" value="1"></td>
+                                <td><input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-list]" value="1"></td>
+
+                            </tr>
+
+                            @endforeach
+                            </tbody>
+
+                        </table>
+
+                        <div class="text-center">
+                            <button class="btn btn-primary" type="submit">Submit</button>
+
+                            <div class="float-end">
+                                <a href="{{route('permissions.index')}}">
+                                    <span class="badge bg-secondary">Back</span>
+                                </a>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+@endsection
+
+```
+
+
+### Save all the permissions in json using Laravel Casts
+
+- Go to the Permission model and add this code:
+
+```php
+    protected $casts = [
+        'name' => 'array'
+    ];
+```
+
+- What this `casting` does is that it converts the string into json format for each role id. 
+- For example: `{"department":{"can-add":"1","can-edit":"1","can-view":"1","can-delete":"1","can-list":"1"},"role":{"can-add":"1","can-edit":"1","can-view":"1","can-delete":"1","can-list":"1"},"permission":{"can-add":"1","can-edit":"1","can-view":"1","can-delete":"1","can-list":"1"},"user":{"can-add":"1","can-edit":"1","can-view":"1","can-delete":"1","can-list":"1"}}`
+will be converted into a `map` format. Later on, it will be straightforward to
+use these like a normal map.
+- Now store it in the following way.
+
+## PermissionController@store
+
+- Validate that `role_id` has only one submission.
+
+```php
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'role_id' => 'required|unique:permissions,role_id',
+        ]);
+
+        Permission::create($request->all());
+        return redirect()->back()->with('message','Permission created successfully');
+
+    }
+```
+
+## Get all permissions
+
+### PermissionController@index
+
+- Get the permissions.
+- Return permission/index.blade.php
+
+```php
+// PermissionController@index
+    public function index()
+    {
+        $permission = Permission::get();
+        return view('admin.permission.index', compact('permission'));
+    }
+```
+
+### permission/index.blade.php
+
+- Create `permission/index.blade.php`.
+- Copy everything from `department/index.blade.php`.
+- Change the heading to `All Permissions`.
+- Replace the `$departments` to `$permissions` and `$department` to
+`$permission`.
+- Modify the table as there are only four columns:
+  - SN
+  - Name
+  - Edit button
+  - Delete button
+
+```bladehtml
+<!--permission/index.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    All Permissions
+                </div>
+                <div class="card-body">
+
+                    @if(count($permissions)>0)
+
+                    <table id="datatablesSimple">
+                        <thead>
+                        <tr>
+                            <th>SN</th>
+                            <th>Name</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach($permissions as $key=>$permission)
+                        <tr>
+                            <td>{{$key+1}}</td>
+                            <td>{{$permission->role->name}}</td>
+                            <td>
+                                <a href="{{route('permissions.edit', $permission->id)}}">
+                                    <div class="p-1">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal{{$permission->id}}">
+                                    <div class="p-1">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                </a>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="exampleModal{{$permission->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <form action="{{route('permissions.destroy', $permission->id)}}" method="post">
+                                            @csrf
+                                            @method('DELETE')
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="exampleModalLabel">Confirm Delete</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Do you really want to delete?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Modal End -->
+
+                            </td>
+
+                        </tr>
+                        @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                    @else
+                    No permissions found!
+                    @endif
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endsection
+
+
+```
+
+## Edit permissions
+
+### PermissionController@edit
+
+```php
+// PermissionController@edit
+    public function edit(string $id)
+    {
+        // $permissionList is an array in PermissionController class.
+        // $permissionList = ['department','role','permission','user',]
+        $permissionList = $this->permissionList;
+        $permission = Permission::find($id);
+        return view('admin.permission.edit', compact('permission', 'permissionList'));
+    }
+```
+
+### permission/edit.blade.php
+
+- Copy everything from `permission/create.blade.php`
+- Update the `<form action="{{route('permissions.update', $permission->id)}}"`
+- Method should be PATCH: `@method('PATCH`).
+- For every `<input type="checkbox">`, check if the key-value pair exists
+in the order of `name[department][can-edit]`, then it should be checked 
+else unchecked(default). Use `isset()` method to check it. For example,
+`<input type="checkbox" name="name[{{strtolower($permissionItem)}}][can-add]" value="1"
+@if(isset($permission['name'][$permissionItem]['can-add'])) checked @endif>`
+
+```bladehtml 
+<!--permission/edit.blade.php-->
+
+```
+
+### PermissionController@update
+
+```php
+    public function update(Request $request, string $id)
+    {
+        $this->validate($request,[
+            'name' => 'required',
+        ]);
+        $permission = Permission::find($id);
+        $permission->update($request->all());
+        return redirect()->back()->with('message','Permission updated successfully');
+    }
+```
+
+### PermissionController@destroy
+
+```php
+    public function destroy(string $id)
+    {
+        Permission::find($id)->delete();
+        return redirect()->back()->with('message','Permission deleted successfully');
+    }
+```
+
+
+## Hide and Show links based on Permission `Important`
+
+### Display User name in Navbar
+
+- Go to `layouts/navbar.blade.php`.
+- Add this code to display username: `{{Auth()->user()->name}}`.
+
+### Method to hide the links based on permissions
+
+- Permissions are stored as an associated array for each role.
+- For example, for the admin role, these are the permissions.
+```php
+{
+    "department":{
+        "can-add":"1",
+        "can-edit":"1",
+        "can-view":"1",
+        "can-delete":"1",
+        "can-list":"1"
+    },
+    "role":{
+        "can-add":"1",
+        "can-edit":"1",
+        "can-view":"1",
+        "can-delete":"1",
+        "can-list":"1"
+    },
+    "permission":{
+        "can-add":"1",
+        "can-edit":"1",
+        "can-view":"1",
+        "can-delete":"1",
+        "can-list":"1"
+    },
+    "user":{
+        "can-add":"1",
+        "can-edit":"1",
+        "can-view":"1",
+        "can-delete":"1",
+        "can-list":"1"
+    }
+}
+```
+
+- If a particular permission exists or not, can be verified using
+the isset() method in any `blade.php` file. For example, the logged in user can edit 
+a department or not, can be verified as:
+  - ```php
+        @if(isset(auth()->user()->role->permission['name']['department']['can-edit']))
+    ```
+- It returns `1` if that permission exists and `0` if it does not.
+
+- Based on this, we use this method to check for every button or link 
+that hits a particular route.
+  - Use this `conditional code snippet` in every `edit` and `delete` button in all the `index` pages.
+  - Use this in the sidebar links in the same way.
+
+## Protect the routes using Middleware
+
+Steps:
+
+- Create a `trait` at `app/Traits/permissionTrait.php`.
+- Create a method named `hasPermission()` in this trait.
+- The `hasPermission()` method will check for the required permission
+for different route requests.
+- Create a `middleware` named `HasPermission`.
+- Use the `hasPermission()` method from trait in the middleware.
+- Register `HasPermission` middleware in `bootstrap/app.php`.
+- Add this middle in the `web.php` file to protect routes.
+
+
+### Create Trait
+
+- Create `app/Traits/permissionTrait.php`
+- Code it in this way::
+
+```php
+// app/Traits/permissionTrait.php
+<?php
+
+namespace App\Traits;
+
+use Illuminate\Support\Facades\Route;
+
+trait permissionTrait {
+    public function hasPermission(){
+
+        $permissionList = ['department', 'role', 'permission', 'user',];
+        $permissions = ['can-add', 'can-edit', 'can-delete', 'can-view', 'can-list'];
+        $crudRoutes = ['create', 'store', 'edit', 'index', 'update', 'delete'];
+
+        foreach ($permissionList as $permissionItem){
+            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-add']) && (Route::is($permissionItem.'s.create') || Route::is($permissionItem.'s.store') )){
+                return abort(401);
+            }
+
+            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-edit']) && (Route::is($permissionItem.'s.edit') || Route::is($permissionItem.'s.update') )){
+                return abort(401);
+            }
+
+            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-view']) && Route::is($permissionItem.'s.index') ){
+                return abort(401);
+            }
+
+            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-delete']) && Route::is($permissionItem.'s.delete') ){
+                return abort(401);
+            }
+
+
+        }
+
+    }
+}
+
+```
+
+### Create middleware
+
+- `php artisan make:middleware HasPermission`
+- Code it in this way:
+
+```php
+// app/Http/Middleware/HasPermission.php
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use App\Traits\permissionTrait;
+
+class HasPermission
+{
+    use permissionTrait;
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $this->hasPermission();
+        return $next($request);
+    }
+}
+
+```
+
+### Register the middleware
+
+```php
+// bootstrap/app.php
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(\App\Http\Middleware\HasPermission::class);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+```
+
+### Add the middleware in `web.php`
+
+```php
+// routes/web.php
+Route::middleware(['auth', HasPermission::class])->group(function () {
+    // routes
+}
+```
+
+[//]: # (Permissions ends here)
+
+<hr>
+
+# Employee Leave
