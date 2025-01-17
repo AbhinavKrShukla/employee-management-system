@@ -104,7 +104,7 @@
 
                             <div class="form-group">
                                 <label>Start Date</label>
-                                <input class="form-control @error('start_from') is-invalid @enderror" type="date"
+                                <input type="text" class="form-control @error('start_from') is-invalid @enderror" id="datepicker"
                                        name="start_from"
                                        value="{{old('start_from')}}">
                                 @error('start_from')

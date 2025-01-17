@@ -68,48 +68,26 @@
                         </nav>
                     </div>
 
-                    {{-- Permissions --}}
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePagesPermission" aria-expanded="false" aria-controls="collapsePagesPermission">
-                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
-                        Permissions
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayoutsLeave" aria-expanded="false" aria-controls="collapseLayoutsLeave">
+                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                        Leaves
                         <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                     </a>
-                    <div class="collapse" id="collapsePagesPermission" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                        <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
-                                Roles
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                            </a>
-                            <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
-                                <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="{{route('roles.create')}}">Create Roles</a>
-                                    <a class="nav-link" href="{{route('roles.index')}}">View Roles</a>
-                                </nav>
-                            </div>
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">
-                                Pages
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                            </a>
-                            <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
-                                <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="401.html">401 Page</a>
-                                    <a class="nav-link" href="404.html">404 Page</a>
-                                    <a class="nav-link" href="500.html">500 Page</a>
-                                </nav>
-                            </div>
+                    <div class="collapse" id="collapseLayoutsLeave" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['leave']['can-list']))
+                                <a class="nav-link" href="{{route('leaves.index')}}">Approve Leave</a>
+                            @endif
+                        </nav>
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['leave']['can-add']))
+                                <a class="nav-link" href="{{route('leaves.create')}}">Create Leave</a>
+                            @endif
                         </nav>
                     </div>
 
 
-                    <div class="sb-sidenav-menu-heading">Addons</div>
-                    <a class="nav-link" href="charts.html">
-                        <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
-                        Charts
-                    </a>
-                    <a class="nav-link" href="tables.html">
-                        <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                        Tables
-                    </a>
                 </div>
             </div>
             <div class="sb-sidenav-footer">

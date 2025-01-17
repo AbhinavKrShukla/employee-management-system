@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 trait permissionTrait {
     public function hasPermission(){
 
-        $permissionList = ['department', 'role', 'permission', 'user',];
+        $permissionList = ['department', 'role', 'permission', 'user', 'leave'];
         $permissions = ['can-add', 'can-edit', 'can-delete', 'can-view', 'can-list'];
         $crudRoutes = ['create', 'store', 'edit', 'index', 'update', 'delete'];
 
@@ -20,16 +20,19 @@ trait permissionTrait {
                 return abort(401);
             }
 
-            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-view']) && Route::is($permissionItem.'s.index') ){
+            if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-list']) && (Route::is($permissionItem.'s.index') || Route::is('accept-reject-leave')) ){
                 return abort(401);
             }
 
             if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-delete']) && Route::is($permissionItem.'s.delete') ){
                 return abort(401);
             }
-
-
         }
+
+        if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-list']) && (Route::is($permissionItem.'s.edit') || Route::is($permissionItem.'s.update') )){
+            return abort(401);
+        }
+
 
     }
 }

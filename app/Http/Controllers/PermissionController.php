@@ -14,6 +14,7 @@ class PermissionController extends Controller
         'role',
         'permission',
         'user',
+        'leave',
     ];
 
     /**

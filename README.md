@@ -223,6 +223,7 @@ Create these models and migrations:
 - `User` has on `Role`.
 - `Permission` belongs to `Role`.
 - `Role` has one `Permission`.
+- `Leave` belongs to `User`.
 
 # Departments
 
@@ -2186,3 +2187,580 @@ Route::middleware(['auth', HasPermission::class])->group(function () {
 <hr>
 
 # Employee Leave
+
+## Prequisites
+
+### Create LeaveController
+
+```php 
+php artisan make:controller LeaveController -r
+```
+
+###  Unguard the elements in `Leave` model.
+
+```php
+class Leave extends Model
+{
+    protected $guarded = [];
+}
+```
+
+### Create reource route for Leave
+
+```php
+    Route::resource('leaves', LeaveController::class);
+```
+
+### Using JqueryUI Date picker
+
+- Copy this `js` link: `<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/smoothness/jquery-ui.css">` from official website [https://api.jqueryui.com/datepicker/#entry-examples].
+- Paste it in `navbar.blade.php`.
+- Again, copy the `<script>` from official website and paste it in
+`footer.blade.php`.
+    ```bladehtml
+    <!-- jQuery Library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery UI Library -->
+    <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+    <script>
+        $( "#datepicker" ).datepicker();
+    </script>
+    <script>
+        $( "#datepicker1" ).datepicker();
+    </script>
+    <!-- Here two scripts are for two dates, such as in Leave form, from date1 to date2 -->
+    ```
+- In the `<input>` field that selects date,
+  - don't define the `<input type="">`
+  - provide the `<input id="datepicker">` as `datepicker`.
+  
+- Do this input modification in `user/create` and `user/edit`.
+
+#### Changing the format of date
+
+- For this, we need to modify this:
+
+```bladehtml
+    <script>
+        $( "#datepicker" ).datepicker({dateFormat:"yy-mm-dd"}).val();
+    </script>
+```
+
+## Create Leave form
+
+### LeaveController@create
+
+- Find all the previous leaves of the user.
+- View the `create` page along with his `leaves`.
+
+```php
+// LeaveController@create
+    public function create()
+    {
+        $leaves = Leave::latest()->where('user_id', auth()user()->id)->get();
+        return view('admin.leave.create', compact('leaves'));
+    }
+```
+
+### leave/create.blade.php
+
+```bladehtml
+<!--leave/create.blade.php-->
+
+
+```
+
+### LeaveController@store
+
+- Validate the fields.
+- Get the request data in a new variable.
+- Add more fields data into that variable such as
+user_id, status and reply message.
+- Save it in database.
+- Return redirect back with a success message.
+
+```php
+// LeaveController@store
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'from' => 'required',
+            'to' => 'required|after:from',
+            'type' => 'required',
+            'description' => 'required'
+        ]);
+
+        $data = $request->all();
+        $data['user_id'] = auth()->user()->id;
+        $data['status'] = 0; // pending
+        $data['message'] = '';
+        Leave::create($data);
+
+        return redirect()->back()->with('message', 'Leave Requested Successfully');
+    }
+```
+
+###
+
+```php
+// LeaveController@edit
+    public function edit(string $id)
+    {
+        if(Leave::find($id)->status != 0)
+        {
+            return redirect()->back()->with('message', 'Leave is already approved!');
+        }
+
+        $leave = Leave::find($id);
+        return view('admin.leave.edit', compact('leave'));
+    }
+```
+
+### leave/edit.blade.php
+
+```bladehtml
+<!--leave/edit.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card border-info">
+                <div class="card-header">{{ __('Update Leave') }}</div>
+
+                <div class="card-body">
+
+                    <form method="post" action="{{route('leaves.update', $leave->id)}}"> @csrf
+                        @method('PUT')
+
+                        <div class="form-group">
+                            <label>From</label>
+                            <input id="datepicker" class="form-control @error('from') is-invalid @enderror" name="from" value="{{$leave->from}}">
+                            @error('from')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>To</label>
+                            <input id="datepicker1" class="form-control @error('to') is-invalid @enderror" name="to" value="{{$leave->to}}">
+                            @error('to')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Type of Leave</label>
+                            <select class="form-control" name="type">
+                                <option value="annualleave" @if($leave->type == "annualleave") selected @endif>Annual Leave</option>
+                                <option value="sickleave" @if($leave->type == "sickleave") selected @endif>Sick Leave</option>
+                                <option value="parentalleave" @if($leave->type == "parentalleave") selected @endif>Parental Leave</option>
+                                <option value="other" @if($leave->type == "other") selected @endif>Other Leave</option>
+                            </select>
+                            @error('type')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" type="text" name="description">{{$leave->description}}</textarea>
+                            @error('description')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group text-center mt-2">
+                            <button class="btn btn-primary" type="submit">Update</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+
+
+        </div>
+    </div>
+</div>
+@endsection
+
+```
+
+### LeaveController@update
+
+```php
+// LeaveController@update
+    public function update(Request $request, string $id)
+    {
+        if(Leave::find($id)->status != 0)
+        {
+            return redirect()->back()->with('message', 'Leave is already approved!');
+        }
+
+        $this->validate($request, [
+            'from' => 'required|date|after:today',
+            'to' => 'required|after:from',
+            'type' => 'required',
+            'description' => 'required'
+        ]);
+
+        $leave = Leave::find($id);
+        $data = $request->all();
+        $data['user_id'] = auth()->user()->id;
+        $data['status'] = 0; // pending
+        $data['message'] = '';
+        $leave->update($data);
+
+        return redirect()->route('leaves.create')->with('message', 'Leave Requested Successfully');
+    }
+```
+
+### LeaveController@destroy
+
+```php
+// LeaveController@destroy
+    public function destroy(string $id)
+    {
+        if(Leave::find($id)->status != 0)
+        {
+            return redirect()->back()->with('message', 'Leave is already approved!');
+        }
+
+        Leave::find($id)->delete();
+        return redirect()->back()->with('message', 'Leave Deleted!');
+    }
+```
+
+## Accept or Reject Leaves
+
+- We do it from `leaves/index.blade.php`.
+
+### LeaveController@index
+
+```php
+// LeaveController@index
+
+```
+
+### leave/indexblade.php
+
+- Copy everything from `home.blade.php`.
+- Change the `@extends()` to use our `master.blade.php` template.
+- Also change the Heading.
+- Copy the table from `leave/create.blade.php`.
+- Modify the table as:
+  - First column displays the name of the User who applied for leave.
+  - Remove the `Edit` and `Delete` button with a `Approve/Reject` button.
+  - When `Approve/Reject` button is hit, is shows a popup for confirmation.
+  - This popup has a `<select>` for `Approve` and `Reject`.
+  - It has a `<textarea>` for `reply` message.
+
+```php
+// index.blade.php
+@extends('admin.layouts.master')
+
+@section('content')
+    <div class="container mt-3">
+        <div class="row justify-content-center">
+            <div class="col-md-11">
+
+                @if(Session::has('message'))
+                    <div class="alert alert-success">
+                        {{Session::get('message')}}
+                    </div>
+                @endif
+                
+                <div class="card">
+                    <div class="card-header"><strong>{{ __('Leaves') }}</strong></div>
+
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Date From</th>
+                            <th scope="col">Date To</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Reply</th>
+                            <th scope="col">Approve/Reject</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($leaves as $key=>$leave)
+                            <tr>
+                                <td>{{$leave->user->name}}</td>
+                                <td>{{$leave->from}}</td>
+                                <td>{{$leave->to}}</td>
+                                <td>{{$leave->type}}</td>
+                                <td><div style="width: 200px; max-height: 100px;">{{$leave->description}}</div></td>
+                                <td>
+                                    @if($leave->status == 0)
+                                        <div class="badge bg-secondary">Pending</div>
+                                    @elseif ($leave->status == 1)
+                                        <div class="badge bg-success">Approved</div>
+                                    @elseif ($leave->status == 2)
+                                        <div class="badge bg-danger">Rejected</div>
+                                    @endif
+                                </td>
+                                <td>{{$leave->message}}</td>
+                                <td>
+                                    @if($leave->status == 0)
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal{{$leave->id}}">
+                                            <div class="p-1">
+                                                <button class="btn btn-info"> Approve/Reject</button>
+                                            </div>
+                                        </a>
+
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="exampleModal{{$leave->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <form action="{{route('accept-reject-leave', $leave->id)}}" method="post">
+                                                    @csrf
+
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="exampleModalLabel">Confirm Leave</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+
+                                                            <div class="form-group">
+                                                                <label>Status</label>
+                                                                <select class="form-control" name="status">
+                                                                    <option value="">Select</option>
+                                                                    <option value="1">Approve</option>
+                                                                    <option value="2">Reject</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-group mt-1">
+                                                                <label>Reply message</label>
+                                                                <textarea class="form-control mt-1 " placeholder="Reply..." name="message"></textarea>
+                                                            </div>
+
+
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-success">Confirm</button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <!-- Modal End -->
+                                    @endif
+
+                                </td>
+
+                            </tr>
+                        @endforeach
+
+                        </tbody>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+```
+
+### Create a post-route for `accept/reject` leave
+
+```php
+Route::post('accept-reject-leave/{id}', [LeaveController::class, 'acceptRejectLeave'])->name('accept-reject-leave');
+```
+
+### LeaveController@acceptRejectLeave
+
+```php
+// LeaveController@acceptRejectLeave
+    public function acceptRejectLeave(Request $request, $id)
+    {
+        $this->validate($request, [
+            'status' => 'required',
+            'message' => 'required'
+        ]);
+
+        $leave = Leave::find($id);
+        if($leave->status != 0)
+        {
+            return redirect()->back()->with('message', 'Leave is already approved');
+        }
+
+        $status = $request->status;
+        $message = $request->message;
+        $leave->update([
+            'status' => $status,
+            'message' => $message
+        ]);
+
+        return redirect()->back()->with('message', 'Leave updated');
+
+    }
+```
+
+
+### Modify Sidebar to show Leave links
+
+Now the sidebar is structured as:
+- Sidebar
+  - Dashboard
+  - Departments
+    - Create
+    - View
+  - User
+    - Roles
+      - Create Roles
+      - View Roles
+    - Permissions
+      - View Permission
+      - Create Permission
+  - Leaves
+    - Approve
+    - Create
+
+```bladehtml
+<!--resources/views/admin/layouts/sidebar.blade.php-->
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+            <div class="sb-sidenav-menu">
+                <div class="nav">
+                    <div class="sb-sidenav-menu-heading">Core</div>
+                    <a class="nav-link" href="{{url('/')}}">
+                        <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        Dashboard
+                    </a>
+                    <div class="sb-sidenav-menu-heading">Interface</div>
+                    @if(isset(auth()->user()->role->permission['name']['department']['can-view']))
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                            <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                            Departments
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                        </a>
+                        <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                @if(isset(auth()->user()->role->permission['name']['department']['can-add']))
+                                    <a class="nav-link" href="{{route('departments.create')}}">Create</a>
+                                @endif
+                                <a class="nav-link" href="{{route('departments.index')}}">View</a>
+                            </nav>
+                        </div>
+                    @endif
+
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
+                        <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                        User
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+                        <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
+
+                            @if(isset(auth()->user()->role->permission['name']['role']['can-view']))
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
+                                Roles
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    @if(isset(auth()->user()->role->permission['name']['role']['can-add']))
+                                        <a class="nav-link" href="{{route('roles.create')}}">Create Roles</a>
+                                    @endif
+                                    @if(isset(auth()->user()->role->permission['name']['role']['can-view']))
+                                        <a class="nav-link" href="{{route('roles.index')}}">View Roles</a>
+                                    @endif
+                                </nav>
+                            </div>
+                            @endif
+
+                            @if(isset(auth()->user()->role->permission['name']['permission']['can-view']))
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">
+                                Permissions
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{route('permissions.index')}}">View Permission</a>
+                                    @if(isset(auth()->user()->role->permission['name']['permission']['can-add']))
+                                        <a class="nav-link" href="{{route('permissions.create')}}">Create Permission</a>
+                                    @endif
+                                </nav>
+                            </div>
+                            @endif
+                        </nav>
+                    </div>
+
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayoutsLeave" aria-expanded="false" aria-controls="collapseLayoutsLeave">
+                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                        Leaves
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapseLayoutsLeave" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['leave']['can-list']))
+                                <a class="nav-link" href="{{route('leaves.index')}}">Approve Leave</a>
+                            @endif
+                        </nav>
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['leave']['can-add']))
+                                <a class="nav-link" href="{{route('leaves.create')}}">Create Leave</a>
+                            @endif
+                        </nav>
+                    </div>
+
+
+                </div>
+            </div>
+            <div class="sb-sidenav-footer">
+                <div class="small">Logged in as:</div>
+                Start Bootstrap
+            </div>
+        </nav>
+    </div>
+
+```
+
+### Protect `leaves.accept-reject-leave` route from unauthorized access
+
+- In the `PermissionController` and `permissionTrait`, add `leaves`
+in `PermissionList` array.
+- Now go to `permissions.edit` route for `admin` and update the admin
+permissions for leaves.
+- And since only admin can approve or reject leaves, we don't need to 
+modify any other leaves.
+- Also, modify `permissionTrait` as if the one who can list the `Leaves` can
+can also approve/reject it. 
+    ```php
+    // app/Traits/permissionTrait.php
+    if(!isset(auth()->user()->role->permission['name'][$permissionItem]['can-list']) && (Route::is($permissionItem.'s.index') || Route::is('accept-reject-leave')) ){
+        return abort(401);
+    }
+    ```
+
+[//]: # (Employee Leave Completed)
+<hr>
+
+# Notice
