@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 trait permissionTrait {
     public function hasPermission(){
 
-        $permissionList = ['department', 'role', 'permission', 'user', 'leave'];
+        $permissionList = ['department', 'role', 'permission', 'user', 'leave', 'notice'];
         $permissions = ['can-add', 'can-edit', 'can-delete', 'can-view', 'can-list'];
         $crudRoutes = ['create', 'store', 'edit', 'index', 'update', 'delete'];
 

@@ -87,6 +87,26 @@
                         </nav>
                     </div>
 
+{{--                    Notices --}}
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayoutsNotice" aria-expanded="false" aria-controls="collapseLayoutsNotice">
+                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                        Notice
+                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                    </a>
+                    <div class="collapse" id="collapseLayoutsNotice" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['notice']['can-list']))
+                                <a class="nav-link" href="{{route('notices.index')}}">All Notices</a>
+                            @endif
+                        </nav>
+                        <nav class="sb-sidenav-menu-nested nav">
+                            @if(isset(auth()->user()->role->permission['name']['notice']['can-add']))
+                                <a class="nav-link" href="{{route('notices.create')}}">Create Notice</a>
+                            @endif
+                        </nav>
+                    </div>
+
 
                 </div>
             </div>

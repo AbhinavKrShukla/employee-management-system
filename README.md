@@ -2764,3 +2764,311 @@ can also approve/reject it.
 <hr>
 
 # Notice
+
+## Setup
+
+### Create a controller
+
+`php artisan make:controller NoticeController -r`
+
+### Create a resource route
+
+```php
+// web.php
+Route::resource('notices', NoticeController::class);
+```
+
+### Unguard the elements in model
+
+```php
+// Notice Model
+class Notice extends Model
+{
+    protected $guarded = [];
+}
+
+```
+
+## CRUD for Notice
+
+### NoticeController@create
+
+View the file here: [NoticeController@create](./app/Http/Controllers/NoticeController.php)
+
+```php
+// NoticeController@create
+    public function create()
+    {
+        return view('admin.notice.create');
+    }
+```
+
+### notice/create.blade.php
+
+```bladehtml
+<!--notice/create.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card">
+                <div class="card-header">{{ __('Create Notice') }}</div>
+
+                <div class="card-body">
+
+                    <form method="post" action="{{route('notices.store')}}"> @csrf
+
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input class="form-control @error('title') is-invalid @enderror" type="text" name="title" value="{{old('title')}}">
+                            @error('title')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" type="text" name="description">{{old('description')}}</textarea>
+                            @error('description')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="text" class="form-control @error('date') is-invalid @enderror" id="datepicker"
+                                   name="date"
+                                   value="{{old('date')}}">
+                            @error('date')
+                            <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                            @enderror
+                        </div>
+
+                        {{--                            <div class="form-group">--}}
+                            {{--                                <label>Name</label>--}}
+                            {{--                                <input class="form-control @error('name') is-invalid @enderror" type="text" name="name" value="{{old('name')}}">--}}
+                            {{--                                @error('name')--}}
+                            {{--                                <span class="invalid-feedback" role="alert">--}}
+{{--                                        <strong>{{ $message }}</strong>--}}
+{{--                                    </span>--}}
+                            {{--                                @enderror--}}
+                            {{--                            </div>--}}
+
+
+                        <div class="form-group text-center mt-2">
+                            <button class="btn btn-primary" type="submit">Submit</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+```
+
+### NoticeController@store
+
+```php
+// NoticeController@store
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'date' => 'required|date|after:today',
+//            'name' => 'required|max:100'
+        ]);
+
+        $data = $request->all();
+        $data['name'] = auth()->user()->name;
+        Notice::create($data);
+        return redirect()->back()->with('message', 'Notice Create Successfully');
+    }
+
+```
+
+### NoticeController@index
+
+```php
+// NoticeController@index
+
+```
+
+### notice/index.blade.php
+
+```bladehtml
+<!--notice/index.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="alert alert-secondary">All Notices</div>
+
+            @foreach($notices as $notice)
+
+            <div class="card mb-3 alert alert-primary">
+
+                <div class="card-header m-2 bg-warning">
+                    {{$notice->title}}
+                </div>
+
+                <div class="card-body">
+
+                    <div class="alert">{{$notice->description}}</div>
+                    <div class="badge bg-success">{{$notice->date}}</div>
+                    <div class="badge bg-warning text-black">{{$notice->name}}</div>
+                </div>
+
+                @if(isset(auth()->user()->role->permission['name']['notice']['can-edit']))
+                <div class="card-footer">
+                    <div class="float-start">
+                        {{--                                @if(isset(auth()->user()->role->permission['name']['notice']['can-edit']))--}}
+                        <a href="{{route('notices.edit', $notice->id)}}">
+                            <div class="p-1">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                        </a>
+                        {{--                                @endif--}}
+                    </div>
+                    <div class="float-end">
+                        {{--                                @if(isset(auth()->user()->role->permission['name']['notice']['can-delete']))--}}
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal{{$notice->id}}">
+                            <div class="p-1">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                        </a>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal{{$notice->id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <form action="{{route('notices.destroy', $notice->id)}}" method="post">
+                                    @csrf
+                                    @method('DELETE')
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Do you really want to delete?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Modal End -->
+                        {{--                                @endif--}}
+                    </div>
+
+                </div>
+                @endif
+
+            </div>
+            @endforeach
+
+        </div>
+    </div>
+</div>
+@endsection
+
+```
+
+### NoticeController@edit
+
+```php
+// NoticeController@edit
+
+```
+### notice/edit.blade.php
+
+```bladehtml
+<!--notice/edit.blade.php-->
+
+```
+
+### NoticeController@update
+
+```php
+// NoticeController@update
+
+```
+
+### NoticeController@destroy
+```php
+// NoticeController@destroy
+
+```
+
+## Update permissions for notices
+
+### `PermissionController` & `permissionTrait`
+
+- Update the `PermissionList` array by adding `notice` element in each
+of these files.
+
+### Update the permissions for every role.
+
+- Update all the permissions by going to 'permissions/index' route.
+
+
+## Update the Sidebar
+
+- Sidebar
+  - ...
+  - ...
+  - Notice
+    - All Notices
+    - Create
+
+### Hide the links
+
+- Hide the links in UI for different roles using this code snippet.
+
+```bladehtml
+@if(isset(auth()->user()->role->permission['name']['notice']['can-list']))
+    <a class="nav-link" href="{{route('notices.index')}}">All Notices</a>
+    ... other codes go on //
+@endif
+```
+
+[//]: # (Notice completed)
+
+# Bulk Email
+
+
+
+
+
+

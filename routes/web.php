@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -25,6 +26,7 @@ Route::middleware(['auth', HasPermission::class])->group(function () {
     Route::resource('permissions', PermissionController::class);
     Route::resource('leaves', LeaveController::class);
     Route::post('accept-reject-leave/{id}', [LeaveController::class, 'acceptRejectLeave'])->name('accept-reject-leave');
+    Route::resource('notices', NoticeController::class);
 });
 
 
