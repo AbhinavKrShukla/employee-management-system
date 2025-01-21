@@ -31,5 +31,25 @@
     $( "#datepicker1" ).datepicker({dateFormat:"yy-mm-dd"}).val();
 </script>
 
+<!-- hide and show in male.blade.php -->
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#email').on('change', function () {
+            const value = this.value;
+
+            if (value == "1") {
+                $("#department").show();
+                $("#person").hide();
+            } else if (value == "2") {
+                $("#person").show();
+                $("#department").hide();
+            } else {
+                $("#department").hide();
+                $("#person").hide();
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

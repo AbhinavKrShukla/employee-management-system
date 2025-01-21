@@ -107,6 +107,13 @@
                         </nav>
                     </div>
 
+                    @if(isset(auth()->user()->role->permission['name']['mail']['can-add']))
+                    <a class="nav-link" href="{{route('mails.create')}}">
+                        <div class="sb-nav-link-icon"><i class="fa fa-envelope"></i></div>
+                        Mail
+                    </a>
+                    @endif
+
 
                 </div>
             </div>

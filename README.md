@@ -3064,11 +3064,388 @@ of these files.
 ```
 
 [//]: # (Notice completed)
+<hr>
+
 
 # Bulk Email
 
+## Mail Setup
+
+### Create MailController
+
+`php artisan make:controller MailController` 
+
+### Create a Mail
+
+`php artisan make:mail SendMail`
+
+### Get Google App password
+
+- Go to https://myaccount.google.com/security.
+- Ensure your gmail has 2-steps verification.
+- Then search for `App Password`.
+- Generate a nwe App password.
+- Copy it.
+- Then setup `.env` file for mail as follows.
+
+### Mail Details setup in `.env` file
+
+```
+// .env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=__YourEmail__
+MAIL_PASSWORD=__YourAppPassword__
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=__YourEmail__
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+### Create get route 
+
+- Create a get route for mail:
+
+```php
+// web.php
+    Route::get('mails', [MailController::class, 'create'])->name('mails.create');
+```
+
+### MailController@create
+
+```php
+
+    public function create()
+    {
+        return view('admin.email.create');
+    }
+```
+
+### mail/create.blade.php
+
+```bladehtml
+<!--email/create.blade.php-->
+@extends('admin.layouts.master')
+
+@section('content')
+<div class="container mt-2">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            @if(Session::has('message'))
+            <div class="alert alert-success">
+                {{Session::get('message')}}
+            </div>
+            @endif
+
+            <div class="card">
+                <div class="card-header">{{ __('Send Mail') }}</div>
+
+                <div class="card-body">
+
+                    <form action="{{route('mails.store')}}" method="post" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="form-group">
+                            <label>Select</label>
+                            <select id="email" class="form-control mt-2">
+                                <option value="0">Mail to all staffs</option>
+                                <option value="1">Choose Department</option>
+                                <option value="2">Choose Person</option>
+                            </select>
+                            @error('department')
+                            <span class="invalid-feedback" role="alert"><strong>{{$message}}</strong></span>
+                            @enderror
+                            @error('person')
+                            <span class="invalid-feedback" role="alert"><strong>{{$message}}</strong></span>
+                            @enderror
+
+                            <select id="department" class="form-control mt-2 @error('department') is-invalid @enderror" name="department">
+                                <option value="">Select Department</option>
+                                @foreach(\App\Models\Department::all() as $department)
+                                <option value="{{$department->id}}">{{$department->name}}</option>
+                                @endforeach
+                            </select>
+                            @error('department')
+                            <span class="invalid-feedback" role="alert"><strong>{{$message}}</strong></span>
+                            @enderror
+
+                            <select id="person" class="form-control mt-2 @error('person') is-invalid @enderror" name="person">
+                                <option value="">Select Person</option>
+                                @foreach(\App\Models\User::all() as $user)
+                                <option value="{{$user->id}}">{{$user->name}}</option>
+                                @endforeach
+                            </select>
+                            @error('person')
+                            <span class="invalid-feedback" role="alert"><strong>{{$message}}</strong></span>
+                            @enderror
+
+                            <div class="form-group mt-2">
+                                <label>Body</label>
+                                <textarea class="form-control @error('body') is-invalid @enderror" name="body">
+
+                                    </textarea>
+                                @error('body')
+                                <span class="invalid-feedback" role="alert">
+                                            <strong>{{$message}}</strong>
+                                        </span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group mt-2">
+                                <label>File</label>
+                                <input class="form-control @error('body') is-invalid @enderror" type="file" name="file">
+                                @error('file')
+                                <span class="invalid-feedback" role="alert">
+                                            <strong>{{$message}}</strong>
+                                        </span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group text-center mt-2">
+                                <button class="btn btn-primary" type="submit">
+                                    Send Mail
+                                </button>
+                            </div>
 
 
 
 
+                        </div>
+
+
+                    </form>
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{--    Some css style to hide the department and person div--}}
+<style>
+    #department{
+        display: none;
+    }
+    #person{
+        display: none;
+    }
+</style>
+
+@endsection
+
+```
+
+- Add some javascript in `admin/layouts/footer.blade.php` 
+to make hide and show effective.
+
+```bladehtml
+<!-- hide and show in male.blade.php -->
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#email').on('change', function () {
+            const value = this.value;
+
+            if (value == "1") {
+                $("#department").show();
+                $("#person").hide();
+            } else if (value == "2") {
+                $("#person").show();
+                $("#department").hide();
+            } else {
+                $("#department").hide();
+                $("#person").hide();
+            }
+        });
+    });
+</script>
+
+```
+
+
+## Send Email with attachment
+
+### Create a route for storing email
+
+```php
+// web.php
+Route::post('mails', [MailController::class, 'store'])->name('mails.store');
+```
+
+### Create a mail `SendMail`
+
+`php atisan make:mail SendMail`
+
+- This will create a file at: `app/Mail/SendMail.php`.
+- This is a special mail file specifically for sending emails.
+
+### MailController@store
+
+```php
+// MailController@store
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'file'=>'mimes:pdf,docx,doc,jpeg,jpg,png',
+            'body'=>'required'
+        ]);
+
+        $file = $request->file('file');
+
+        $details = [
+            'body' => $request->body,
+            'file' => $request->file('file'),
+        ];
+
+
+        if($request->department)
+        {
+            $this->validate($request, [
+                'department' => 'required',
+            ]);
+            $users = User::where('department_id', $request->department);
+            foreach ($users as $user) {
+                Mail::to($user->email)->send(new SendMail($details));
+            }
+        } elseif($request->person)
+        {
+            $this->validate($request, [
+                'person' => 'required',
+            ]);
+            $user = User::find($request->person);
+            $userEmail = $user->email;
+            Mail::to($userEmail)->send(new SendMail($details));
+        } else
+        {
+            $users = User::get();
+            foreach ($users as $user) {
+                Mail::to($user->email)->send(new SendMail($details));
+            }
+        }
+
+        return redirect()->back()->with('message', 'Mail Sent Successfully');
+
+```
+
+### SendMail.php
+
+```php
+// app/Mail/SendMail.php
+<?php
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Attachment;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class SendMail extends Mailable
+{
+    use Queueable, SerializesModels;
+    public $details;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct($details = [])
+    {
+        $this->details = $details;
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: "Mail From Laravel Employee Management System",
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'admin.email.sendmail',
+
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromPath($this->details['file']->getRealPath())
+                ->as($this->details['file']->getClientOriginalName())
+                ->withMime($this->details['file']->getMimeType()),
+        ];
+    }
+}
+
+```
+
+### resources/views/admin/email/sendmail.blade.php
+
+```bladehtml
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mail from LaravelEMS</title>
+</head>
+
+<body>
+    <p>{{$details['body']}}</p>
+    <p>Thank you!</p>
+</body>
+
+</html>
+```
+
+
+## Configure Permission for Mails
+
+### Authenticate the route
+
+- Add `mail` in `PermissionList` array in these two files:
+  - `PermissionController.php`
+  - `permissionTrait.php`
+- Then, edit permissions for each role by going to `permissions.index` route.
+
+### Add `Mail` in Sidebar
+
+- Sidebar
+  - ...
+  - ...
+  - Mail `mails.create route`
+
+### Hide and show the links
+
+Use this syntax
+
+```bladehtml
+@if(isset(auth()->user()->role->permission['name']['mail']['can-add']))
+<a class="nav-link" href="{{route('mails.create')}}">
+    <div class="sb-nav-link-icon"><i class="fa fa-envelope"></i></div>
+    Mail
+</a>
+@endif
+```
+
+[//]: # (Bulk Email completed)
+<hr>
+
+# Dashboard
 
