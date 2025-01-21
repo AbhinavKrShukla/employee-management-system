@@ -69,7 +69,7 @@
                     </div>
 
                     <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayoutsLeave" aria-expanded="false" aria-controls="collapseLayoutsLeave">
-                        <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                        <div class="sb-nav-link-icon"><i class="fas fa-pencil"></i></div>
                         Leaves
                         <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                     </a>

@@ -8,6 +8,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\HasPermission;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 
@@ -19,7 +20,8 @@ Route::view('/employee', 'admin.create');
 
 Route::middleware(['auth', HasPermission::class])->group(function () {
     Route::get('/', function () {
-        return view('welcome');
+        $user = User::find(auth()->user()->id);
+        return view('welcome', compact('user'));
     });
     Route::resource('departments', DepartmentController::class);
     Route::resource('roles', RoleController::class);

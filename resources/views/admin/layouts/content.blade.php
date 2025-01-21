@@ -8,42 +8,138 @@
             </ol>
             <div class="row">
                 <div class="col-xl-3 col-md-6">
-                    <div class="card bg-primary text-white mb-4">
-                        <div class="card-body">Primary Card</div>
+                    <div class="card bg-primary text-white mb-4 ">
+                        <div class="card-body text-center">
+                            <p><i class="fas fa-user fa-fw" style="font-size: 100px;"></i></p>
+                            Users
+                        </div>
                         <div class="card-footer d-flex align-items-center justify-content-between">
-                            <a class="small text-white stretched-link" href="#">View Details</a>
+                            <a class="small text-white stretched-link" href="{{route('users.index')}}" style="font-size: 18px;">
+                                Total: {{App\Models\User::all()->count()}}
+                            </a>
                             <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="card bg-warning text-white mb-4">
-                        <div class="card-body">Warning Card</div>
+                        <div class="card-body text-center">
+                            <p><i class="fas fa-home" style="font-size: 100px;"></i></p>
+                            Departments
+                        </div>
                         <div class="card-footer d-flex align-items-center justify-content-between">
-                            <a class="small text-white stretched-link" href="#">View Details</a>
+                            <a class="small text-white stretched-link" href="{{route('departments.index')}}"  style="font-size: 18px;">
+                                Total: {{App\Models\Department::all()->count()}}
+                            </a>
                             <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="card bg-success text-white mb-4">
-                        <div class="card-body">Success Card</div>
+                        <div class="card-body text-center">
+                            <p><i class="fas fa-envelope" style="font-size: 100px;"></i></p>
+                            Notice
+                        </div>
                         <div class="card-footer d-flex align-items-center justify-content-between">
-                            <a class="small text-white stretched-link" href="#">View Details</a>
+                            <a class="small text-white stretched-link" href="{{route('notices.index')}}"  style="font-size: 18px;">
+                                Total: {{App\Models\Notice::all()->count()}}
+                            </a>
                             <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-md-6">
                     <div class="card bg-danger text-white mb-4">
-                        <div class="card-body">Danger Card</div>
+                        <div class="card-body text-center">
+                            <p><i class="fas fa-book" style="font-size: 100px;"></i></p>
+                            Leave
+                        </div>
                         <div class="card-footer d-flex align-items-center justify-content-between">
-                            <a class="small text-white stretched-link" href="#">View Details</a>
+                            <a class="small text-white stretched-link" href="{{route('leaves.index')}}"  style="font-size: 18px;">
+                                Total: {{App\Models\Leave::all()->count()}}
+                            </a>
                             <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="card mb-4">
+                        <div class="card-header m-2">
+                            User Info
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-card">
+                                <div class="card-body">
+                                    <img src="{{asset('profile/'.$user->image)}}" alt="Profile Image" class="profile-image">
+                                    <div class="ms-4 me-4">
+                                        <h5>{{$user->name}}</h5>
+                                        <p class="text-muted">{{$user->email}}</p>
+                                        <h6>{{$user->address}}</h6>
+
+                                    </div>
+                                    <div class="ms-4 me-4">
+                                        <label>Designation</label>
+                                        <h6>{{$user->designation}}</h6>
+
+                                        <label>Contact</label>
+                                        <h6>{{$user->mobile_number}}</h6>
+
+
+                                    </div>
+                                    <div class="ms-4 me-4">
+                                        <label>Department</label>
+                                        <h6>{{$user->department->name}}</h6>
+
+                                        <label>Role</label>
+                                        <h6>{{$user->role->name}}</h6>
+                                    </div>
+                                </div>
+                            </div>
+
+{{--                            css             --}}
+                            <style>
+                                .custom-card {
+                                    background-color: #e7f3ff;
+                                    border-radius: 10px;
+                                    padding: 20px;
+                                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                                }
+                                .custom-card .card-body {
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                .profile-image {
+                                    border-radius: 50%;
+                                    width: 100px;
+                                    height: 100px;
+                                    margin-right: 20px;
+                                }
+                                .custom-stats {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-top: 15px;
+                                }
+                                .custom-stats div {
+                                    text-align: center;
+                                }
+                                .custom-stats .value {
+                                    font-weight: bold;
+                                    font-size: 1.2rem;
+                                }
+                                .btn-group {
+                                    margin-top: 10px;
+                                }
+                            </style>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-xl-6">
                     <div class="card mb-4">
