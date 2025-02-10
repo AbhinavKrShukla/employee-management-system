@@ -859,7 +859,7 @@ its route and the pop-up.
     ];
 ```
 
-## Crete resource route for Users
+## Create resource route for Users
 
 ```php
 Route::resource('users', UserController::class);
